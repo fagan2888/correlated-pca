@@ -1,0 +1,7 @@
+#Ignore the data files
+*.mat
+
+#ignore the figures
+*.fig, *.eps, *.pdf
+
+
