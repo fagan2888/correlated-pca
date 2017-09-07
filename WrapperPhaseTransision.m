@@ -31,7 +31,7 @@ for mc = 1 : num_trials
     A = -BoundL + 2 * BoundL * rand(r, t_max);
     L = P * A;
     
-    %%Generate noise -- independent, but anisotropic
+    %%Generate noise -- independent, non-isotropic, bounded
     V = zeros(n, t_max);
     for jj = 1 : r
         V(jj, :) = -diag_entries_noise(jj) + ...
@@ -39,30 +39,30 @@ for mc = 1 : num_trials
     end
     
     %%Generate data-dependent noise
-    b0 = 0.25;
-    beta = ceil(b0 * 1000);
-    I = eye(n);
-    s = 0.05 * n;
-    rho = 1;
-    q = 0.01; 
+%     b0 = 0.25;
+%     beta = ceil(b0 * 1000);
+%     I = eye(n);
+%     s = 0.05 * n;
+%     rho = 1;
+%     q = 0.01; 
+%     
+%     num_changes = floor(t_max/beta);
+%     T = zeros(n, t_max);
+%     for jj = 1 : num_changes
+%         bind = max(mod(floor((jj-1) * s/rho + 1), n), 1);
+%         sind = min(bind - 1 + s, n);
+%         idx = bind : sind;
+%         T(idx, (jj-1) * beta + 1 : jj * beta) = 1;
+%     end
+%     
+%     for jj = 1 : t_max
+%         idx = find(T(:, jj));
+%         temp = abs(randn(length(idx), n));
+%         Mst = q * temp / norm(temp * P);
+%         W(:, jj) = I(:, idx) * (Mst * L(:, jj));
+%     end
     
-    num_changes = floor(t_max/beta);
-    T = zeros(n, t_max);
-    for jj = 1 : num_changes
-        bind = max(mod(floor((jj-1) * s/rho + 1), n), 1);
-        sind = min(bind - 1 + s, n);
-        idx = bind : sind;
-        T(idx, (jj-1) * beta + 1 : jj * beta) = 1;
-    end
-    
-    for jj = 1 : t_max
-        idx = find(T(:, jj));
-        temp = abs(randn(length(idx), n));
-        Mst = q * temp / norm(temp * P);
-        W(:, jj) = I(:, idx) * (Mst * L(:, jj));
-    end
-    
-    Y = L + W + V;
+    Y = L + V;
     
     
     %% Perform SVD for different values of \alpha and check accuracy
@@ -79,6 +79,9 @@ for mc = 1 : num_trials
             = Calc_SubspaceError(EstimatedSubspaces{mc, ii}, P);
     end
 end
+
+
+%%compute theoretical bounds
 
 %% Visulize results
 figure
