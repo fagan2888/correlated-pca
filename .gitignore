@@ -2,7 +2,10 @@
 *.mat
 
 #ignore the figures
-*.fig, *.eps, *.pdf, *.jpg
+*.fig
+*.eps
+*.pdf
+*.jpg
 
 #ignore the temporary matlab files
 *.m~
