@@ -10,7 +10,7 @@ close all
 tic
 n = 100;
 t_max = 7000;
-r = 10;
+r = 1;
 U = orth(randn(n, n));
 P = U(:, 1 : r);
 P_perp = U(:, r+1 : end);
@@ -41,9 +41,6 @@ for mc = 1 : num_trials
             2 * BoundL(jj) * rand(1, t_max);
     end
     L = P * A;
-    
-    %%Generate nosie -- independent and isotropic,
-    
     
     %%Generate noise -- independent, non-isotropic, bounded
     %V = zeros(n, t_max);
