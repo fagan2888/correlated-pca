@@ -130,7 +130,6 @@ for mc = 1 : num_trials
         SE_theory_temp(ii) = (lambda_p_pperp / lambda_minus + sqrt(b_0) * (2*q + q^2) * f) / ...
             (1 - (lambda_vrest_plus - lambda_vp_minus) / lambda_minus - ...
             sqrt(b_0) * (2*q + q^2) * f);
-        
     end
 end
 
