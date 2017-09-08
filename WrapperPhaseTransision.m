@@ -10,17 +10,17 @@ close all
 tic
 n = 100;
 t_max = 50000;
-r = 10;
+r = 5;
 U = orth(randn(n, n));
 P = U(:, 1 : r);
 P_perp = U(:, r+1 : end);
 
-BoundL = linspace(5, 6, r);
+BoundL = linspace(6, 6, r);
 diag_entries_noise = linspace(1, 1.25, n);
 num_trials = 20;
 
-AlRange = unique(ceil(linspace(1.1 * r * log(n) , n * log(n), 80)));
-
+AlRange = unique(ceil(linspace(8 * r * log(n) ,  n * log(n) / 1.25, 80)));
+ 
 FinalSubspaceError = zeros(num_trials, length(AlRange));
 EstimatedSubspaces = cell(num_trials, length(AlRange));
 
@@ -52,7 +52,7 @@ for mc = 1 : num_trials
         I = eye(n);
         s = 0.05 * n;
         rho = 1;
-        q = 0.01;
+        q = 1e-3;
     
         num_changes = floor(t_max/beta);
         T = zeros(n, t_max);
@@ -118,8 +118,8 @@ for mc = 1 : num_trials
 %         SE_theory(ii) = (3 * sqrt(b_0) * q * f + d_cor_alpha) / ...
 %             (1 - 3 * sqrt(b_0) * q * f -d_cor_alpha - d_cor_denom_alpha);
         
-        d_alpha = sqrt(3) * max([q * f * sqrt(r * log(n) / alpha), ...
-            sqrt(lambda_v_plus / lambda_minus * f), sqrt(r * log(n) / alpha), ...
+        d_alpha =  max([q * f * sqrt(r * log(n) / alpha), ...
+            sqrt(lambda_v_plus / lambda_minus * f) * sqrt(r * log(n) / alpha), ...
             lambda_v_plus/ lambda_minus  * sqrt(n * log(n) / alpha)]);
         d_denom_alpha = 3 * f * sqrt((r + log(n)) / alpha);
         
@@ -134,15 +134,20 @@ for mc = 1 : num_trials
 end
 
 %% Visulize results
+
+AlRange_r5 = AlRange;
+SE_theory_r5 = SE_theory;
+FinalSubspaceError_r5 = FinalSubspaceError;
+save('r_5.mat', 'AlRange_r5', 'SE_theory_r5', 'FinalSubspaceError_r5')
+
 figure
 plot(AlRange, mean(FinalSubspaceError, 1));
 hold
 plot(AlRange, max(FinalSubspaceError, [], 1), 'r');
 plot(AlRange, SE_theory, 'g')
-plot(AlRange, SE_theory_temp, 'k')
 axis tight
 xlabel('alpha');
 ylabel('SE');
 legend('mean SE', 'max SE', 'Predicted SE bound');
-title('Correlated noise and Uncorrelated noise')
+title('Correlated and Uncorrelated noise')
 toc
