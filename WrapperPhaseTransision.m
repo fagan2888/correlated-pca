@@ -20,7 +20,7 @@ BoundL = linspace(6, 6, r);
 diag_entries_noise = linspace(1, 1.1, r);
 num_trials = 3;
 
-AlRange = unique(ceil(linspace(5 * (r + log(n)) ,  n * log(n), 10)));
+AlRange = unique(ceil(linspace(1 ,  3 * n, 100)));
 
 FinalSubspaceError = zeros(num_trials, length(AlRange));
 EstimatedSubspaces = cell(num_trials, length(AlRange));
@@ -176,25 +176,25 @@ end
 % save('r_5.mat', 'AlRange_r5', 'SE_theory_r5', 'FinalSubspaceError_r5')
 
 figure
-subplot(211)
-plot(AlRange, mean(FinalSubspaceError, 1), 'bo-');
+%subplot(211)
+plot(AlRange, mean(FinalSubspaceError, 1), 'b-');
 hold
-plot(AlRange, max(FinalSubspaceError, [], 1), 'rs-');
-plot(AlRange, SE_theory, 'g*-')
-plot(AlRange, SE_theory_temp, 'ks-.')
+plot(AlRange, max(FinalSubspaceError, [], 1), 'r-');
+% plot(AlRange, SE_theory, 'g*-')
+%plot(AlRange, SE_theory_temp, 'ks-.')
 axis tight
 xlabel('alpha');
 ylabel('SE');
-legend('mean SE', 'max SE', 'Predicted SE bound', 'SE bound with d=0');
-title('n = 1000, r = r_v = 10')
+legend('mean SE', 'max SE', 'Predicted SE bound');
+title('n = 100, r = r_v = 10')
 %title('y = l + w + v')
-subplot(212)
-plot(AlRange, d_alpha, 'bo-')
-hold
-plot(AlRange, d_denom_alpha, 'rs-')
-axis tight
-xlabel('alpha');
-ylabel('d');
-legend('d(alpha)', 'd_{denom}(alpha)');
+% subplot(212)
+% plot(AlRange, d_alpha, 'bo-')
+% hold
+% plot(AlRange, d_denom_alpha, 'rs-')
+% axis tight
+% xlabel('alpha');
+% ylabel('d');
+% legend('d(alpha)', 'd_{denom}(alpha)');
 
 toc

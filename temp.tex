@@ -1,0 +1,17 @@
+\documentclass[tikz]{article}
+
+\usepackage{pgfplots}
+
+\begin{document}
+
+\begin{tikzpicture}
+  \begin{axis}[view={0}{90},
+               xlabel=$x$,
+               ylabel=$y$,
+               colormap/blackwhite,
+               title=Phase Transition versus $n$]
+    \addplot3[surf] file {PhaseTransvsr.dat};
+  \end{axis}
+\end{tikzpicture}
+
+\end{document}

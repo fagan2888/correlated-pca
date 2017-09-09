@@ -11,38 +11,46 @@ tic
 %n = 100;
 %r = 1;
 
-num_trials = 3;
-alpha_num = 5;
+num_trials = 50;
+alpha_num = 10;
 
-SE_theory = zeros(9, alpha_num);
-SE_theory_temp = zeros(9, alpha_num);
+% SE_theory = zeros(210, alpha_num);
+% SE_theory_temp = zeros(210, alpha_num);
+%
+% mean_SE = zeros(210, alpha_num);
+% max_SE = zeros(210, alpha_num);
 
-mean_SE = zeros(9, alpha_num);
-max_SE = zeros(9, alpha_num);
+SE_theory = zeros(10, alpha_num);
+SE_theory_temp = zeros(10, alpha_num);
 
-all_errors = cell(9);
+mean_SE = zeros(10, alpha_num);
+max_SE = zeros(10, alpha_num);
+
+all_errors = cell(10, 1);
 
 cnt = 1;
 
-for nn = [100, 500, 1000]
+for nn = 100
+% for nn = unique(ceil(linspace(50, 1000, 10)))
     n = nn;
-    for rr = [1, 5, 10]
+        for rr = [1 : 1 : 10]
+%     for rr = 1
         r = rr;
         
         fprintf('n = %d, \t r = %d, \n', n, r);
         
-        t_max = 7000;
+        t_max = 500;
         
         U = orth(randn(n, n));
         P = U(:, 1 : r);
         P_perp = U(:, r+1 : end);
         B = orth(randn(n, r));
         
-        BoundL = linspace(6, 6, r);
-        diag_entries_noise = linspace(1, 1.1, r);
+        %         BoundL = linspace(6, 6, r);
+        %         diag_entries_noise = linspace(1, 1.1, r);
         
         
-        AlRange = unique(ceil(linspace(50,  t_max, alpha_num)));
+        AlRange = unique(ceil(linspace(10,  500, alpha_num)));
         
         FinalSubspaceError = zeros(num_trials, length(AlRange));
         EstimatedSubspaces = cell(num_trials, length(AlRange));
@@ -55,7 +63,10 @@ for nn = [100, 500, 1000]
             %%parallelized to increase speed.
             
             parfor ii = 1 : length(AlRange)
-                %fprintf('MC iteration %d..\n', mc);
+                
+                BoundL = linspace(6, 6, r);
+                diag_entries_noise = linspace(1, 1.1, r);
+                
                 
                 %%Generate true data
                 A = zeros(r, t_max);
@@ -77,7 +88,7 @@ for nn = [100, 500, 1000]
                 V = B * C;
                 
                 alpha = AlRange(ii);
-                
+                fprintf('MC %d..\t alpha %d\n', mc, alpha);
                 %Generate data-dependent noise
                 b_0 = 0.05;
                 beta = ceil(b_0 * alpha);
@@ -161,43 +172,70 @@ for nn = [100, 500, 1000]
 end
 %% Visulize results
 
-figure
-plot(AlRange, mean_SE(1, :), 'ro-')
-hold
-plot(AlRange, mean_SE(2, :), 'rs-.')
-plot(AlRange, mean_SE(3, :), 'r*--')
-plot(AlRange, mean_SE(4, :), 'go-')
-plot(AlRange, mean_SE(5, :), 'gs-.')
-plot(AlRange, mean_SE(6, :), 'g*--')
-plot(AlRange, mean_SE(7, :), 'bo-')
-plot(AlRange, mean_SE(8, :), 'bs-.')
-plot(AlRange, mean_SE(9, :), 'b*--')
-axis tight
-xlabel('alpha')
-ylabel('SE')
-title('mean SE')
-legend('n = 100, r=1', 'n = 100, r=5', 'n = 100, r=10', ...
-    'n = 500, r=1', 'n = 500, r=5', 'n = 500, r=10', ...
-    'n = 1000, r=1', 'n = 1000, r=5', 'n = 1000, r=10')
+b_0 = 0.05;
+q = 0.001;
+lambda_v_plus = 0.2017;
+lambda_minus = 6;
+f = 1;
+
+PhaseTrans = zeros(10, alpha_num);
+%thresh = 0.01;
+thresh = 1.8 * (lambda_v_plus / lambda_minus + b_0 * (2 * q + q^2) * f);
+for ii = 1 : 10
+    temp = all_errors{ii};
+    for jj = 1 : alpha_num
+        temp1 = temp(:, jj);
+        PhaseTrans(ii, jj) = length(find(temp1 <= thresh));
+    end
+end
 
 figure
-plot(AlRange, max_SE(1, :), 'ro-')
-hold
-plot(AlRange, max_SE(2, :), 'rs-.')
-plot(AlRange, max_SE(3, :), 'r*--')
-plot(AlRange, max_SE(4, :), 'go-')
-plot(AlRange, max_SE(5, :), 'gs-.')
-plot(AlRange, max_SE(6, :), 'g*--')
-plot(AlRange, max_SE(7, :), 'bo-')
-plot(AlRange, max_SE(8, :), 'bs-.')
-plot(AlRange, max_SE(9, :), 'b*--')
-axis tight
-xlabel('alpha')
-ylabel('SE')
-title('max SE')
-legend('n = 100, r=1', 'n = 100, r=5', 'n = 100, r=10', ...
-    'n = 500, r=1', 'n = 500, r=5', 'n = 500, r=10', ...
-    'n = 1000, r=1', 'n = 1000, r=5', 'n = 1000, r=10')
+imagesc(AlRange, [1 : 10], PhaseTrans);
+xlabel('\alpha')
+ylabel('n')
+colormap('gray')
+
+save('data/phase_trans_vs_r_mc50.mat')
+
+
+
+% figure
+% plot(AlRange, mean_SE(1, :), 'ro-')
+% hold
+% plot(AlRange, mean_SE(2, :), 'rs-.')
+% plot(AlRange, mean_SE(3, :), 'r*--')
+% plot(AlRange, mean_SE(4, :), 'go-')
+% plot(AlRange, mean_SE(5, :), 'gs-.')
+% plot(AlRange, mean_SE(6, :), 'g*--')
+% plot(AlRange, mean_SE(7, :), 'bo-')
+% plot(AlRange, mean_SE(8, :), 'bs-.')
+% plot(AlRange, mean_SE(9, :), 'b*--')
+% axis tight
+% xlabel('alpha')
+% ylabel('SE')
+% title('mean SE')
+% legend('n = 100, r=1', 'n = 100, r=5', 'n = 100, r=10', ...
+%     'n = 500, r=1', 'n = 500, r=5', 'n = 500, r=10', ...
+%     'n = 1000, r=1', 'n = 1000, r=5', 'n = 1000, r=10')
+%
+% figure
+% plot(AlRange, max_SE(1, :), 'ro-')
+% hold
+% plot(AlRange, max_SE(2, :), 'rs-.')
+% plot(AlRange, max_SE(3, :), 'r*--')
+% plot(AlRange, max_SE(4, :), 'go-')
+% plot(AlRange, max_SE(5, :), 'gs-.')
+% plot(AlRange, max_SE(6, :), 'g*--')
+% plot(AlRange, max_SE(7, :), 'bo-')
+% plot(AlRange, max_SE(8, :), 'bs-.')
+% plot(AlRange, max_SE(9, :), 'b*--')
+% axis tight
+% xlabel('alpha')
+% ylabel('SE')
+% title('max SE')
+% legend('n = 100, r=1', 'n = 100, r=5', 'n = 100, r=10', ...
+%     'n = 500, r=1', 'n = 500, r=5', 'n = 500, r=10', ...
+%     'n = 1000, r=1', 'n = 1000, r=5', 'n = 1000, r=10')
 
 
 
