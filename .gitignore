@@ -7,5 +7,13 @@
 *.pdf
 *.jpg
 
+#ignore latex aux files
+*.log
+*.synctex.gz
+*.aux
+
+#ignore data files
+*.dat
+
 #ignore the temporary matlab files
 *.m~

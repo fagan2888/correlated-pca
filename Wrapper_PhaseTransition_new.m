@@ -11,7 +11,7 @@ tic
 %n = 100;
 %r = 1;
 
-num_trials = 50;
+num_trials = 10;
 alpha_num = 10;
 
 % SE_theory = zeros(210, alpha_num);
@@ -30,16 +30,16 @@ all_errors = cell(10, 1);
 
 cnt = 1;
 
-for nn = 100
-% for nn = unique(ceil(linspace(50, 1000, 10)))
+%for nn = 100
+for nn = unique(ceil(linspace(50, 500, 10)))
     n = nn;
-        for rr = [1 : 1 : 10]
-%     for rr = 1
+    %for rr = [1 : 1 : 10]
+    for rr = 1
         r = rr;
         
         fprintf('n = %d, \t r = %d, \n', n, r);
         
-        t_max = 500;
+        t_max = 8000;
         
         U = orth(randn(n, n));
         P = U(:, 1 : r);
@@ -50,45 +50,58 @@ for nn = 100
         %         diag_entries_noise = linspace(1, 1.1, r);
         
         
-        AlRange = unique(ceil(linspace(10,  500, alpha_num)));
+        AlRange = unique(ceil(linspace(50,  t_max, alpha_num)));
         
         FinalSubspaceError = zeros(num_trials, length(AlRange));
         EstimatedSubspaces = cell(num_trials, length(AlRange));
         
         
         for mc = 1 : num_trials
-            
-            
             %% Perform SVD for different values of \alpha and check accuracy
             %%parallelized to increase speed.
             
             parfor ii = 1 : length(AlRange)
                 
                 BoundL = linspace(6, 6, r);
-                diag_entries_noise = linspace(1, 1.1, r);
+                diag_entries_noise = linspace(0.5, 0.9, r);
                 
                 
                 %%Generate true data
-                A = zeros(r, t_max);
-                for jj = 1 : r
-                    A(jj, :) = -BoundL(jj) + ...
-                        2 * BoundL(jj) * rand(1, t_max);
-                end
+                %%bounded
+%                 A = zeros(r, t_max);
+%                 for jj = 1 : r
+%                     A(jj, :) = -BoundL(jj) + ...
+%                         2 * BoundL(jj) * rand(1, t_max);
+%                 end
+                
+                %%gaussian 
+                A = 4 * randn(r, t_max);
+%                 for jj = 1 : r
+%                     A(jj, :) = 2 * randn(1, t_max);
+%                 end
+                
                 L = P * A;
                 
-                %%Generate noise -- independent, non-isotropic, bounded
-                %V = zeros(n, t_max);
+                
+                %%Generate isotropic noise
+%                 sigma = 0.5;
+%                 Z = sigma * randn(n, t_max);
+%                 
+%                 Y = L + Z;
+                
+                
+%                 %%Generate noise -- independent, non-isotropic, bounded
                 
                 C = zeros(r, t_max);
                 for jj = 1 : r
-                    C(jj, :) = -diag_entries_noise(jj) + ...
-                        2 * diag_entries_noise(jj) * rand(1, t_max);
+                    C(jj, :) = diag_entries_noise(jj) * randn(1, t_max);
                 end
                 
                 V = B * C;
                 
                 alpha = AlRange(ii);
                 fprintf('MC %d..\t alpha %d\n', mc, alpha);
+                
                 %Generate data-dependent noise
                 b_0 = 0.05;
                 beta = ceil(b_0 * alpha);
@@ -125,7 +138,8 @@ for nn = 100
                 
                 %%compute theoretical bounds
                 %uncorrelated bounds
-                Sigma_v = B * diag(flip(diag_entries_noise.^2 / 6)) * B';
+%                 Sigma_v = B * diag(flip(diag_entries_noise.^2 / 6)) * B';
+                Sigma_v = B * diag(flip(diag_entries_noise.^2)) * B';
                 %Sigma_v = diag(flip(diag_entries_noise.^2 / 6));
                 XX = P' * Sigma_v * P;
                 lambda_vp_minus = min(eig(XX));
@@ -134,8 +148,12 @@ for nn = 100
                 lambda_p_pperp = norm(P_perp' * Sigma_v * P);
                 lambda_v_plus = norm(Sigma_v);
                 
-                lambda_minus = min(BoundL)^2 / 6;
-                lambda_plus = max(BoundL)^2 / 6;
+                lambda_minus = 16;
+                lambda_plus = 16;
+
+                
+%                 lambda_minus = min(BoundL)^2 / 6;
+%                 lambda_plus = max(BoundL)^2 / 6;
                 
                 f = lambda_plus / lambda_minus;
                 
@@ -160,11 +178,7 @@ for nn = 100
             end
             
         end
-        
         all_errors{cnt} = FinalSubspaceError;
-        
-        
-        
         mean_SE(cnt, :) = mean(FinalSubspaceError, 1);
         max_SE(cnt, :) = max(FinalSubspaceError, [], 1);
         cnt = cnt + 1;
@@ -174,14 +188,16 @@ end
 
 b_0 = 0.05;
 q = 0.001;
-lambda_v_plus = 0.2017;
-lambda_minus = 6;
+% lambda_v_plus = 0.2017;
+% lambda_minus = 6;
+lambda_v_plus = 0.8100;
+lambda_minus = 16;
 f = 1;
 
 PhaseTrans = zeros(10, alpha_num);
-%thresh = 0.01;
-thresh = 1.8 * (lambda_v_plus / lambda_minus + b_0 * (2 * q + q^2) * f);
-for ii = 1 : 10
+%thresh = 0.02;
+thresh =  0.3 *  (lambda_v_plus / lambda_minus + b_0 * (2 * q + q^2) * f);
+for ii = 1 : 5
     temp = all_errors{ii};
     for jj = 1 : alpha_num
         temp1 = temp(:, jj);
@@ -190,12 +206,30 @@ for ii = 1 : 10
 end
 
 figure
-imagesc(AlRange, [1 : 10], PhaseTrans);
+imagesc(AlRange, unique(ceil(linspace(50, 500, 10))), PhaseTrans);
 xlabel('\alpha')
 ylabel('n')
 colormap('gray')
 
-save('data/phase_trans_vs_r_mc50.mat')
+% PhaseTrans = zeros(10, alpha_num);
+% %thresh = 0.04;
+% thresh = 0.2 * 0.5;
+% for ii = 1 : 10
+%     temp = all_errors{ii};
+%     for jj = 1 : alpha_num
+%         temp1 = temp(:, jj);
+%         PhaseTrans(ii, jj) = length(find(temp1 <= thresh));
+%     end
+% end
+% 
+% figure
+% imagesc(AlRange, unique(ceil(linspace(50, 1000, 10))), PhaseTrans);
+% xlabel('\alpha')
+% ylabel('n')
+% colormap('gray')
+
+
+% save('data/phase_trans_vs_r_mc50.mat')
 
 
 
