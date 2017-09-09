@@ -39,7 +39,7 @@ for nn = unique(ceil(linspace(50, 500, 10)))
         
         fprintf('n = %d, \t r = %d, \n', n, r);
         
-        t_max = 8000;
+        t_max = 13000;
         
         U = orth(randn(n, n));
         P = U(:, 1 : r);
@@ -50,7 +50,7 @@ for nn = unique(ceil(linspace(50, 500, 10)))
         %         diag_entries_noise = linspace(1, 1.1, r);
         
         
-        AlRange = unique(ceil(linspace(50,  t_max, alpha_num)));
+        AlRange = unique(ceil(linspace(300,  t_max, alpha_num)));
         
         FinalSubspaceError = zeros(num_trials, length(AlRange));
         EstimatedSubspaces = cell(num_trials, length(AlRange));
@@ -63,7 +63,7 @@ for nn = unique(ceil(linspace(50, 500, 10)))
             parfor ii = 1 : length(AlRange)
                 
                 BoundL = linspace(6, 6, r);
-                diag_entries_noise = linspace(0.5, 0.9, r);
+                diag_entries_noise = linspace(0.5, 0.9, n);
                 
                 
                 %%Generate true data
@@ -75,7 +75,7 @@ for nn = unique(ceil(linspace(50, 500, 10)))
 %                 end
                 
                 %%gaussian 
-                A = 4 * randn(r, t_max);
+                A = 10 * randn(r, t_max);
 %                 for jj = 1 : r
 %                     A(jj, :) = 2 * randn(1, t_max);
 %                 end
@@ -93,17 +93,17 @@ for nn = unique(ceil(linspace(50, 500, 10)))
 %                 %%Generate noise -- independent, non-isotropic, bounded
                 
                 C = zeros(r, t_max);
-                for jj = 1 : r
+                for jj = 1 : n
                     C(jj, :) = diag_entries_noise(jj) * randn(1, t_max);
                 end
                 
-                V = B * C;
+                V = C;
                 
                 alpha = AlRange(ii);
                 fprintf('MC %d..\t alpha %d\n', mc, alpha);
                 
                 %Generate data-dependent noise
-                b_0 = 0.05;
+                b_0 = 0.01;
                 beta = ceil(b_0 * alpha);
                 I = eye(n);
                 s = 0.05 * n;
@@ -139,7 +139,7 @@ for nn = unique(ceil(linspace(50, 500, 10)))
                 %%compute theoretical bounds
                 %uncorrelated bounds
 %                 Sigma_v = B * diag(flip(diag_entries_noise.^2 / 6)) * B';
-                Sigma_v = B * diag(flip(diag_entries_noise.^2)) * B';
+                Sigma_v = diag(flip(diag_entries_noise.^2));
                 %Sigma_v = diag(flip(diag_entries_noise.^2 / 6));
                 XX = P' * Sigma_v * P;
                 lambda_vp_minus = min(eig(XX));
@@ -148,8 +148,8 @@ for nn = unique(ceil(linspace(50, 500, 10)))
                 lambda_p_pperp = norm(P_perp' * Sigma_v * P);
                 lambda_v_plus = norm(Sigma_v);
                 
-                lambda_minus = 16;
-                lambda_plus = 16;
+                lambda_minus = 100;
+                lambda_plus = 100;
 
                 
 %                 lambda_minus = min(BoundL)^2 / 6;
@@ -196,7 +196,7 @@ f = 1;
 
 PhaseTrans = zeros(10, alpha_num);
 %thresh = 0.02;
-thresh =  0.3 *  (lambda_v_plus / lambda_minus + b_0 * (2 * q + q^2) * f);
+thresh =  .2 *  (lambda_v_plus / lambda_minus + b_0 * (2 * q + q^2) * f);
 for ii = 1 : 5
     temp = all_errors{ii};
     for jj = 1 : alpha_num
@@ -210,6 +210,8 @@ imagesc(AlRange, unique(ceil(linspace(50, 500, 10))), PhaseTrans);
 xlabel('\alpha')
 ylabel('n')
 colormap('gray')
+
+save('data/phase_trans_vsn_gaussian_mc10.mat');
 
 % PhaseTrans = zeros(10, alpha_num);
 % %thresh = 0.04;
@@ -278,12 +280,13 @@ colormap('gray')
 % FinalSubspaceError_r5 = FinalSubspaceError;
 % save('r_5.mat', 'AlRange_r5', 'SE_theory_r5', 'FinalSubspaceError_r5')
 
-% figure
+figure
 % subplot(211)
-% plot(AlRange, mean(FinalSubspaceError, 1), 'bo-');
-% hold
-% plot(AlRange, max(FinalSubspaceError, [], 1), 'rs-');
-% plot(AlRange, SE_theory, 'g*-')
+temp1 = all_errors{8};
+plot(AlRange, mean(temp1, 1), 'bo-');
+hold
+plot(AlRange, max(temp1, [], 1), 'rs-');
+plot(AlRange, SE_theory(8, :), 'g*-')
 % plot(AlRange, SE_theory_temp, 'ks-.')
 % axis tight
 % xlabel('alpha');

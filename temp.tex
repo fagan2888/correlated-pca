@@ -1,17 +1,87 @@
 \documentclass[tikz]{article}
 
 \usepackage{pgfplots}
+\usepgfplotslibrary{groupplots}
+%\usepgflibrary{pgfplots.groupplots}
+\pgfplotstableread[col sep = comma]{bound_SE.dat}\SEbound
 
 \begin{document}
 
+\begin{figure}[t!]
+\begin{center}
 \begin{tikzpicture}
-  \begin{axis}[view={0}{90},
-               xlabel=$x$,
-               ylabel=$y$,
-               colormap/blackwhite,
-               title=Phase Transition versus $n$]
-    \addplot3[surf] file {PhaseTransvsr.dat};
-  \end{axis}
+    \begin{groupplot}[
+        group style={
+            group size=2 by 1,
+        },
+        width = .5\textwidth,
+        height = 5cm
+    	]
+        \nextgroupplot[
+        		view={0}{90},
+                xlabel=$n$,
+                ylabel=$\alpha$,
+                colormap/blackwhite,
+        ]
+			\addplot3[surf] file {PhaseTransvsn_bounded.dat};
+        
+        \nextgroupplot[
+		        view={0}{90},
+                xlabel=$n$,
+                ylabel=$\alpha$,
+                colormap/blackwhite,
+        ]
+		    \addplot3[surf] file {PhaseTransvsn_gaussian.dat};
+        \end{groupplot}
 \end{tikzpicture}
+\end{center}
+\caption{The left plot shows the phase transition for the bounded noise case. In this case we observe that since the dependence is logarithmic in $n$ the variance cannot be observed even though we increase $n$. The right plot shows, however, that when the data and noise are both Gaussian, there is a nearly linear dependence on $n$.}
+\label{fig:phasetransvsn}
+\end{figure}			
+
+
+\begin{figure}[t!]
+\begin{center}
+\begin{tikzpicture}
+        % load the style created in the preamble
+	\begin{axis} 
+	
+	\addplot table[x index = {0}, y index = {1}]{\SEbound};
+	\addplot table[x index = {0}, y index = {2}]{\SEbound};
+	\addplot table[x index = {0}, y index = {3}]{\SEbound};
+
+    \end{axis}
+\end{tikzpicture}
+\end{center}
+\end{figure}			
+
 
 \end{document}
+
+
+	        \addplot (10,10);
+			\addplot table[x index = {0}, y index = {12}]{\PhatPdata};
+			\node [text width=1em,anchor=north] at (rel axis cs: 0,1) {\subcaption{\label{fig:prelimfiga}}};
+        \nextgroupplot[
+        	ymode=log,
+            xlabel={$t$},
+            title={(b) $\zz = 10^{-2}$},
+            ymin=1e-3, ymax=1.01
+            ]        ]
+        	\addplot table[x index = {0}, y index = {1}]{\PhatPdata};
+	        \addplot table[x index = {0}, y index = {2}]{\PhatPdata};
+	        \addplot table[x index = {0}, y index = {3}]{\PhatPdata};
+	        \addplot (10,10);
+			\addplot table[x index = {0}, y index = {4}]{\PhatPdata};
+\node [text width=1em,anchor=north] at (rel axis cs: 0,1) {\subcaption{\label{fig:prelimfigb}}};
+    \end{groupplot}
+    
+    
+    %          \begin{axis}[view={0}{90},
+%               xlabel=$n$,
+%               ylabel=$\alpha$,
+%               colormap/blackwhite,
+%               title=Phase Transition versus $n$ bounded]
+%    \addplot3[surf] file {PhaseTransvsn_bounded.dat};
+%  \end{axis}
+        
