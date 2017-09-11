@@ -4,47 +4,79 @@
 \usepgfplotslibrary{groupplots}
 %\usepgflibrary{pgfplots.groupplots}
 \pgfplotstableread[col sep = comma]{bound_SE.dat}\SEbound
-
+\pgfplotsset{
+        my legend style compare/.style={
+            legend style={
+                at={(2.35,.85)},
+                anchor=north west,
+            },
+            legend columns=1,
+	    legend style={font=\small},
+        },
+        %grid=minor,
+            x tick label style={font =\small, /pgf/number format/1000 sep=},
+        cycle multi list={
+        {red, line width=0.6pt, mark=o,mark size=2pt}, 
+        {blue, line width=0.6pt, mark=square,mark size=1.5pt}, 
+        {teal, line width=0.6pt, mark=triangle,mark size=1.5pt},
+		},
+}
 \begin{document}
 
-\begin{figure}[t!]
-\begin{center}
-\begin{tikzpicture}
-    \begin{groupplot}[
-        group style={
-            group size=2 by 1,
-        },
-        width = .5\textwidth,
-        height = 5cm
-    	]
-        \nextgroupplot[
-        		view={0}{90},
-                xlabel=$n$,
-                ylabel=$\alpha$,
-                colormap/blackwhite,
-        ]
-			\addplot3[surf] file {PhaseTransvsn_bounded.dat};
-        
-        \nextgroupplot[
-		        view={0}{90},
-                xlabel=$n$,
-                ylabel=$\alpha$,
-                colormap/blackwhite,
-        ]
-		    \addplot3[surf] file {PhaseTransvsn_gaussian.dat};
-        \end{groupplot}
-\end{tikzpicture}
-\end{center}
-\caption{The left plot shows the phase transition for the bounded noise case. In this case we observe that since the dependence is logarithmic in $n$ the variance cannot be observed even though we increase $n$. The right plot shows, however, that when the data and noise are both Gaussian, there is a nearly linear dependence on $n$.}
-\label{fig:phasetransvsn}
-\end{figure}			
+%\begin{figure}[t!]
+%\begin{center}
+%\begin{tikzpicture}
+%    \begin{groupplot}[
+%        group style={
+%            group size=2 by 1,
+%        },
+%        width = .5\textwidth,
+%        height = 5cm
+%    	]
+%        \nextgroupplot[
+%        		view={0}{90},
+%                xlabel=$n$,
+%                ylabel=$\alpha$,
+%                colormap/blackwhite,
+%        ]
+%			\addplot3[surf] file {PhaseTransvsn_bounded.dat};
+%        
+%        \nextgroupplot[
+%		        view={0}{90},
+%                xlabel=$n$,
+%                ylabel=$\alpha$,
+%                colormap/blackwhite,
+%        ]
+%		    \addplot3[surf] file {PhaseTransvsn_gaussian.dat};
+%        \end{groupplot}
+%\end{tikzpicture}
+%\end{center}
+%\caption{The left plot shows the phase transition for the bounded noise case. In this case we observe that since the dependence is logarithmic in $n$ the variance cannot be observed even though we increase $n$. The right plot shows, however, that when the data and noise are both Gaussian, there is a nearly linear dependence on $n$.}
+%\label{fig:phasetransvsn}
+%\end{figure}			
 
 
 \begin{figure}[t!]
 \begin{center}
 \begin{tikzpicture}
         % load the style created in the preamble
-	\begin{axis} 
+	\begin{axis}[
+		xlabel={$\alpha$},
+		ylabel={SE},
+		my legend style compare,
+		legend entries={
+            	Average SE,
+            	Max. SE,
+            	Predicted SE bound,
+            },
+			legend style={
+                at={([yshift=-10pt].41,1.01)},
+                anchor=north west,
+            },
+            ymode=log,
+            xmode=log,
+            enlargelimits=false,
+		] 
 	
 	\addplot table[x index = {0}, y index = {1}]{\SEbound};
 	\addplot table[x index = {0}, y index = {2}]{\SEbound};
