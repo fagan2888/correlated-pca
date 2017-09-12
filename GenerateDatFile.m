@@ -6,16 +6,16 @@ clc
 load('data/phase_trans_vs_n_mc50')
 %%X is data matrix of size (numi, numj)
 X = PhaseTrans;
-%rrange = [1 : 10];
+% rrange = [1 : 10];
 % nrange = unique(ceil(linspace(50, 1000, 10)));
 
 nrange = unique(ceil(linspace(50, 1000, 10)));
 [numi, numj] = size(X);
-fileID = fopen('PhaseTransvsr_gaussian_Bt.dat', 'w');
+fileID = fopen('PhaseTransvsn_gaussian_rv_r.dat', 'w');
 
 for ii = 1 : numi
     for jj = 1 : numj
-        fprintf(fileID, '%d %d %d\n', nrange(ii), AlRange(jj), X(ii, jj));
+        fprintf(fileID, '%d %d %d\n', nrange(ii), AlRange(jj), X(numi + 1 - ii, jj));
     end
     fprintf(fileID, '\n');
 end

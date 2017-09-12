@@ -11,7 +11,7 @@ tic
 %n = 100;
 %r = 1;
 
-num_trials = 100;
+num_trials = 50;
 alpha_num = 10;
 
 % SE_theory = zeros(210, alpha_num);
@@ -31,7 +31,7 @@ all_errors = cell(10, 1);
 cnt = 1;
 
 %for nn = 100
-for nn = unique(ceil(linspace(50, 1000, 10)))
+for nn = unique(ceil(linspace(50, 500, 10)))
     n = nn;
     %for rr = [1 : 1 : 10]
     for rr = 5
@@ -103,60 +103,22 @@ for nn = unique(ceil(linspace(50, 1000, 10)))
                 fprintf('MC %d..\t alpha %d\n', mc, alpha);
                 
                 %Generate data-dependent noise
-                b_0 = 0.05;
+                %%%Generating support set and sparse vectors
+                b_0 = 0.01;
                 beta = ceil(b_0 * alpha);
                 I = eye(n);
-                s = 5;
+                s = 0.05 * n;
                 rho = 1;
                 q = 1e-3;
                 
-                %%%Generating support set and sparse vectors
+                num_changes = floor(t_max/beta);
                 T = zeros(n, t_max);
-                alpha1 = 100;
-                num_changes = floor((t_max)/beta);
-                
-                num_changes1 = floor(alpha1 / beta);
-                bind = 1;
-                sind = 1;
-                flag = 0;
-                ii1 = 1;
-                fval1 = 0;
                 for jj = 1 : num_changes
-                    if(~flag)   %%downward motion
-                        if(ii1 <= num_changes1)
-                            bind = ceil(fval1 + (ii1 - 1) * s/rho + 1);
-                            sind = ceil(min(bind - 1 + s, n));
-                            ii1 = ii1 + 1;
-                            if(ii1 == num_changes1 + 1)
-                                flag = 1;
-                                ii1 = 1;
-                                fval2 = bind;
-                            end
-                        end
-                    else
-                        if(ii1 <= num_changes1)
-                            bind = ceil(max(fval2 - (ii1 - 1) * s/rho , 1));
-                            sind = ceil(bind - 1 + s);
-                            ii1 = ii1 + 1;
-                            if(ii1 == num_changes1 + 1)
-                                flag = 0;
-                                ii1 = 1;
-                            end
-                        end
-                    end
+                    bind = max(mod(floor((jj-1) * s/rho + 1), n), 1);
+                    sind = min(bind - 1 + s, n);
                     idx = bind : sind;
-                    jdx =  (jj-1) * beta + 1 : jj * beta;
-                    T(idx, jdx) = 1;
+                    T(idx, (jj-1) * beta + 1 : jj * beta) = 1;
                 end
-                
-%                 num_changes = floor(t_max/beta);
-%                 T = zeros(n, t_max);
-%                 for jj = 1 : num_changes
-%                     bind = max(mod(floor((jj-1) * s/rho + 1), n), 1);
-%                     sind = min(bind - 1 + s, n);
-%                     idx = bind : sind;
-%                     T(idx, (jj-1) * beta + 1 : jj * beta) = 1;
-%                 end
                 
                 W = zeros(n, t_max);
                 for jj = 1 : t_max
@@ -233,11 +195,23 @@ lambda_v_plus = 0.8100;
 lambda_minus = 36;
 f = 1;
 
+% Sigma_v = B * diag(flip(diag_entries_noise.^2)) * B';
+% %Sigma_v = diag(flip(diag_entries_noise.^2 / 6));
+% XX = P' * Sigma_v * P;
+% lambda_vp_minus = min(eig(XX));
+% YY = Sigma_v - P * XX * P';
+% lambda_vrest_plus = max(eig(YY));
+% lambda_p_pperp = norm(P_perp' * Sigma_v * P);
+% lambda_v_plus = norm(Sigma_v);
+% 
+% thresh = 1.1 * (3 * sqrt(b_0) * q * f + ...
+%     (lambda_p_pperp / lambda_minus) / (1 - (lambda_vrest_plus - lambda_vp_minus) / lambda_minus));
+
 PhaseTrans = zeros(10, alpha_num);
-%thresh = 0.1;
+thresh = 0.008;
 % thresh =  0.3 *  (lambda_v_plus / lambda_minus + b_0 * (2 * q + q^2) * f);
 %thresh = 0.02;
-thresh = 0.02;
+% thresh = 0.02;
 for ii = 1 : 10
     temp = all_errors{ii};
     for jj = 1 : alpha_num
@@ -255,14 +229,14 @@ end
 %     end
 % end
 % thresh = 0.001;
-thresh = 1.2 * thresh;
-for ii = 1 : 10
-    temp = all_errors{ii};
-    for jj = 1 : alpha_num
-        temp1 = temp(:, jj);
-        PhaseTrans(ii, jj) = length(find(temp1 <= thresh));
-    end
-end
+% thresh = 1.2 * thresh;
+% for ii = 1 : 10
+%     temp = all_errors{ii};
+%     for jj = 1 : alpha_num
+%         temp1 = temp(:, jj);
+%         PhaseTrans(ii, jj) = length(find(temp1 <= thresh));
+%     end
+% end
 figure
 imagesc(AlRange, unique(ceil(linspace(50, 500, 10))), PhaseTrans);
 xlabel('\alpha')
