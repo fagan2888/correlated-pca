@@ -1,6 +1,5 @@
-%%%Wrapper to generate the plots for the analysis of SVD algorithm under
-%%%non-isotropic and also data-dependent nosie assumptions.
-
+%%Demo to generate the phase transition matrix to observe variation with
+%%either (i) rank or (ii) Signal dimension
 
 clear
 clc
@@ -8,86 +7,102 @@ close all
 
 %% Initialization
 tic
-%n = 100;
-%r = 1;
 
-num_trials = 3;
-alpha_num = 5;
+num_trials = 5;
+alpha_num = 10;
 
-SE_theory = zeros(9, alpha_num);
-SE_theory_temp = zeros(9, alpha_num);
+% nrange = unique(ceil(linspace(50, 500, 10)));
+rrange = [1 : 10];
 
-mean_SE = zeros(9, alpha_num);
-max_SE = zeros(9, alpha_num);
+nrange = 100;
+%rrange = 10;
 
-all_errors = cell(9);
+SE_theory = zeros(length(rrange), alpha_num); %change to nrange if needed
+SE_theory_temp = zeros(length(rrange), alpha_num);
+
+mean_SE = zeros(length(rrange), alpha_num);
+max_SE = zeros(length(rrange), alpha_num);
+
+all_errors = cell(length(rrange), 1);
 
 cnt = 1;
 
-for nn = [100, 500, 1000]
+for nn = 100
+    % for nn = nrange
     n = nn;
-    for rr = [1, 5, 10]
+    for rr = rrange
+        %     for rr = 5
         r = rr;
         
         fprintf('n = %d, \t r = %d, \n', n, r);
-        
-        t_max = 7000;
+        t_max = 500;
         
         U = orth(randn(n, n));
         P = U(:, 1 : r);
         P_perp = U(:, r+1 : end);
         B = orth(randn(n, r));
         
-        BoundL = linspace(6, 6, r);
-        diag_entries_noise = linspace(1, 1.1, r);
-        
-        
-        AlRange = unique(ceil(linspace(50,  t_max, alpha_num)));
+        AlRange = unique(ceil(linspace(50,  t_max, alpha_num))); %choose smartly
         
         FinalSubspaceError = zeros(num_trials, length(AlRange));
         EstimatedSubspaces = cell(num_trials, length(AlRange));
         
         
         for mc = 1 : num_trials
-            
-            
-            %% Perform SVD for different values of \alpha and check accuracy
             %%parallelized to increase speed.
-            
-            parfor ii = 1 : length(AlRange)
-                %fprintf('MC iteration %d..\n', mc);
+            parfor ii = 1 : length(AlRange) %%if using parfor, note the bound parameters
                 
-                %%Generate true data
+                alpha = AlRange(ii);
+                BoundL = linspace(6, 6, r);
+                diag_entries_noise = linspace(0.5, 0.9, r);
+                
+                %% Data Generation
+                %%bounded
                 A = zeros(r, t_max);
                 for jj = 1 : r
                     A(jj, :) = -BoundL(jj) + ...
                         2 * BoundL(jj) * rand(1, t_max);
                 end
+                
+                %%gaussian
+                %                 A = zeros(r, t_max);
+                %                 for jj = 1 : r
+                %                     A(jj, :) = 6 * randn(1, t_max);
+                %                 end
+                
                 L = P * A;
                 
-                %%Generate noise -- independent, non-isotropic, bounded
-                %V = zeros(n, t_max);
                 
+                %%Generate anisotropic noise
+                %%bounded
+                V = zeros(n, t_max);
                 C = zeros(r, t_max);
                 for jj = 1 : r
-                    C(jj, :) = -diag_entries_noise(jj) + ...
-                        2 * diag_entries_noise(jj) * rand(1, t_max);
+                    C(jj, :) = diag_entries_noise(jj) * rand(1, t_max);
                 end
-                
                 V = B * C;
                 
-                alpha = AlRange(ii);
+                %%gaussian
+                %                 V = zeros(n, t_max);
+                %                 C = zeros(r, t_max);
+                %                 for jj = 1 : r
+                %                     C(jj, :) = diag_entries_noise(jj) * rand(1, t_max);
+                %                 end
+                %                 V = B * C;
+                
+                fprintf('MC %d..\t alpha %d\n', mc, alpha);
                 
                 %Generate data-dependent noise
-                b_0 = 0.05;
+                %%%Generating support set and sparse vectors
+                b_0 = 0.01;
                 beta = ceil(b_0 * alpha);
                 I = eye(n);
                 s = 0.05 * n;
                 rho = 1;
                 q = 1e-3;
-                
                 num_changes = floor(t_max/beta);
                 T = zeros(n, t_max);
+                
                 for jj = 1 : num_changes
                     bind = max(mod(floor((jj-1) * s/rho + 1), n), 1);
                     sind = min(bind - 1 + s, n);
@@ -105,17 +120,15 @@ for nn = [100, 500, 1000]
                 
                 Y = L + W + V;
                 
+                %% Perform SVD for different values of \alpha and check accuracy
                 EmpiricalCovariance = 1 / alpha * Y(:, 1: alpha) * Y(:, 1: alpha)';
-                
                 EstimatedSubspaces{mc, ii} = simpleEVD(EmpiricalCovariance, r);
-                
                 FinalSubspaceError(mc, ii) ...
                     = Calc_SubspaceError(EstimatedSubspaces{mc, ii}, P);
                 
                 %%compute theoretical bounds
                 %uncorrelated bounds
-                Sigma_v = B * diag(flip(diag_entries_noise.^2 / 6)) * B';
-                %Sigma_v = diag(flip(diag_entries_noise.^2 / 6));
+                Sigma_v = B * diag(flip(diag_entries_noise.^2)) * B';
                 XX = P' * Sigma_v * P;
                 lambda_vp_minus = min(eig(XX));
                 YY = Sigma_v - P * XX * P';
@@ -123,8 +136,13 @@ for nn = [100, 500, 1000]
                 lambda_p_pperp = norm(P_perp' * Sigma_v * P);
                 lambda_v_plus = norm(Sigma_v);
                 
-                lambda_minus = min(BoundL)^2 / 6;
-                lambda_plus = max(BoundL)^2 / 6;
+                %%bounded
+                lambda_minus = min(BoundL)^2/3;
+                lambda_plus = max(BoundL)^2/3;
+                
+                %%gaussian
+                %                 lambda_minus = BoundL^2;
+                %                 lambda_plus = BoundL^2;
                 
                 f = lambda_plus / lambda_minus;
                 
@@ -137,7 +155,11 @@ for nn = [100, 500, 1000]
                 d_alpha(ii) =  max([q * f * sqrt(r * log(n) / alpha), ...
                     sqrt(lambda_v_plus / lambda_minus * f) * sqrt(r * log(n) / alpha), ...
                     lambda_v_plus/ lambda_minus  * sqrt(r * log(n) / alpha)]);
+                
                 d_denom_alpha(ii) = f * sqrt((r + log(n)) / alpha);
+                
+                %%gaussian
+                %                 d_denom_alpha(ii) = g * sqrt(n / alpha);
                 
                 SE_theory(cnt, ii) = (lambda_p_pperp / lambda_minus + sqrt(b_0) * (2*q + q^2) * f + d_alpha(ii)) / ...
                     (1 - (lambda_vrest_plus - lambda_vp_minus) / lambda_minus - ...
@@ -149,83 +171,46 @@ for nn = [100, 500, 1000]
             end
             
         end
-        
         all_errors{cnt} = FinalSubspaceError;
-        
-        
-        
         mean_SE(cnt, :) = mean(FinalSubspaceError, 1);
         max_SE(cnt, :) = max(FinalSubspaceError, [], 1);
         cnt = cnt + 1;
     end
 end
 %% Visulize results
+b_0 = 0.05;
+q = 0.001;
+lambda_v_plus = 0.8100;
+lambda_minus = 12;
+f = 1;
+
+% Sigma_v = B * diag(flip(diag_entries_noise.^2)) * B';
+% %Sigma_v = diag(flip(diag_entries_noise.^2 / 6));
+% XX = P' * Sigma_v * P;
+% lambda_vp_minus = min(eig(XX));
+% YY = Sigma_v - P * XX * P';
+% lambda_vrest_plus = max(eig(YY));
+% lambda_p_pperp = norm(P_perp' * Sigma_v * P);
+% lambda_v_plus = norm(Sigma_v);
+%
+% thresh = 1.1 * (3 * sqrt(b_0) * q * f + ...
+%     (lambda_p_pperp / lambda_minus) / (1 - (lambda_vrest_plus - lambda_vp_minus) / lambda_minus));
+
+PhaseTrans = zeros(length(rrange), alpha_num);
+
+thresh = 0.07; %%just set temporarily -- can adjust
+for ii = 1 : length(rrange)
+    temp = all_errors{ii};
+    for jj = 1 : alpha_num
+        temp1 = temp(:, jj);
+        PhaseTrans(ii, jj) = length(find(temp1 <= thresh));
+    end
+end
 
 figure
-plot(AlRange, mean_SE(1, :), 'ro-')
-hold
-plot(AlRange, mean_SE(2, :), 'rs-.')
-plot(AlRange, mean_SE(3, :), 'r*--')
-plot(AlRange, mean_SE(4, :), 'go-')
-plot(AlRange, mean_SE(5, :), 'gs-.')
-plot(AlRange, mean_SE(6, :), 'g*--')
-plot(AlRange, mean_SE(7, :), 'bo-')
-plot(AlRange, mean_SE(8, :), 'bs-.')
-plot(AlRange, mean_SE(9, :), 'b*--')
-axis tight
-xlabel('alpha')
-ylabel('SE')
-title('mean SE')
-legend('n = 100, r=1', 'n = 100, r=5', 'n = 100, r=10', ...
-    'n = 500, r=1', 'n = 500, r=5', 'n = 500, r=10', ...
-    'n = 1000, r=1', 'n = 1000, r=5', 'n = 1000, r=10')
-
-figure
-plot(AlRange, max_SE(1, :), 'ro-')
-hold
-plot(AlRange, max_SE(2, :), 'rs-.')
-plot(AlRange, max_SE(3, :), 'r*--')
-plot(AlRange, max_SE(4, :), 'go-')
-plot(AlRange, max_SE(5, :), 'gs-.')
-plot(AlRange, max_SE(6, :), 'g*--')
-plot(AlRange, max_SE(7, :), 'bo-')
-plot(AlRange, max_SE(8, :), 'bs-.')
-plot(AlRange, max_SE(9, :), 'b*--')
-axis tight
-xlabel('alpha')
-ylabel('SE')
-title('max SE')
-legend('n = 100, r=1', 'n = 100, r=5', 'n = 100, r=10', ...
-    'n = 500, r=1', 'n = 500, r=5', 'n = 500, r=10', ...
-    'n = 1000, r=1', 'n = 1000, r=5', 'n = 1000, r=10')
-
-
-
-% AlRange_r5 = AlRange;
-% SE_theory_r5 = SE_theory;
-% FinalSubspaceError_r5 = FinalSubspaceError;
-% save('r_5.mat', 'AlRange_r5', 'SE_theory_r5', 'FinalSubspaceError_r5')
-
-% figure
-% subplot(211)
-% plot(AlRange, mean(FinalSubspaceError, 1), 'bo-');
-% hold
-% plot(AlRange, max(FinalSubspaceError, [], 1), 'rs-');
-% plot(AlRange, SE_theory, 'g*-')
-% plot(AlRange, SE_theory_temp, 'ks-.')
-% axis tight
-% xlabel('alpha');
-% ylabel('SE');
-% legend('mean SE', 'max SE', 'Predicted SE bound', 'SE bound with d=0');
-% title('n = 1000, r = r_v = 10')
-% %title('y = l + w + v')
-% subplot(212)
-% plot(AlRange, d_alpha, 'bo-')
-% hold
-% plot(AlRange, d_denom_alpha, 'rs-')
-% axis tight
-% xlabel('alpha');
-% ylabel('d');
-% legend('d(alpha)', 'd_{denom}(alpha)');
+imagesc(AlRange, rrange, PhaseTrans);
+xlabel('\alpha')
+ylabel('n')
+colormap('gray')
 
 toc
