@@ -11,7 +11,7 @@ tic
 %n = 100;
 %r = 1;
 
-num_trials = 50;
+num_trials = 100;
 alpha_num = 10;
 
 % SE_theory = zeros(210, alpha_num);
@@ -63,7 +63,7 @@ for nn = unique(ceil(linspace(50, 500, 10)))
             parfor ii = 1 : length(AlRange)
                 
                 BoundL = linspace(6, 6, r);
-                diag_entries_noise = linspace(0.5, 0.9, r);
+                diag_entries_noise = linspace(0.5, 0.9, n);
                 
                 
                 %%Generate true data
@@ -92,12 +92,13 @@ for nn = unique(ceil(linspace(50, 500, 10)))
                 
                 %                 %%Generate noise -- independent, non-isotropic, bounded
                 
-                C = zeros(r, t_max);
-                for jj = 1 : r
-                    C(jj, :) = diag_entries_noise(jj) * randn(1, t_max);
+%                 C = zeros(r, t_max);
+                V = zeros(n, t_max);
+                for jj = 1 : n
+                    V(jj, :) = diag_entries_noise(jj) * randn(1, t_max);
                 end
                 
-                V = B * C;
+%                 V = B * C;
                 
                 alpha = AlRange(ii);
                 fprintf('MC %d..\t alpha %d\n', mc, alpha);
@@ -140,8 +141,8 @@ for nn = unique(ceil(linspace(50, 500, 10)))
                 %%compute theoretical bounds
                 %uncorrelated bounds
                 %                 Sigma_v = B * diag(flip(diag_entries_noise.^2 / 6)) * B';
-                Sigma_v = B * diag(flip(diag_entries_noise.^2)) * B';
-                %Sigma_v = diag(flip(diag_entries_noise.^2 / 6));
+%                 Sigma_v = B * diag(flip(diag_entries_noise.^2)) * B';
+                Sigma_v = diag(flip(diag_entries_noise.^2));
                 XX = P' * Sigma_v * P;
                 lambda_vp_minus = min(eig(XX));
                 YY = Sigma_v - P * XX * P';
@@ -208,7 +209,7 @@ f = 1;
 %     (lambda_p_pperp / lambda_minus) / (1 - (lambda_vrest_plus - lambda_vp_minus) / lambda_minus));
 
 PhaseTrans = zeros(10, alpha_num);
-thresh = 0.008;
+thresh = 0.03;
 % thresh =  0.3 *  (lambda_v_plus / lambda_minus + b_0 * (2 * q + q^2) * f);
 %thresh = 0.02;
 % thresh = 0.02;
@@ -243,7 +244,7 @@ xlabel('\alpha')
 ylabel('n')
 colormap('gray')
 
-%save('data/phase_trans_vsn_gaussian_mc10.mat');
+save('data/phase_trans_vsn_gaussian__rvn_mc100.mat');
 
 % PhaseTrans = zeros(10, alpha_num);
 % %thresh = 0.04;
