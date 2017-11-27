@@ -3,7 +3,7 @@ Folder contains the codes to reproduce the results of our paper illustrating the
 
 If you use the results please cite the following paper
 
-[1] Namrata Vaswani and Praneeth Narayanamurthy, "Finte Sample Guarantees for PCA in non-isotropic and data-dependent noise", arxiv:1702.03070, 2017. 
+[1] Namrata Vaswani and Praneeth Narayanamurthy, "Finte Sample Guarantees for PCA in non-isotropic and data-dependent noise", arxiv:1709.06255, 2017. 
 
 Main contents of the folder
 
