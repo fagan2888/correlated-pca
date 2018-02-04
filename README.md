@@ -9,7 +9,7 @@ Main contents of the folder
 
 1. DemoPhaseTransition.m -- Main demo file to generate the phase transition plots for seeing the dependence of the number of samples required to achieve a desired error level versus either the rank or the signal dimension
 
-2. DemoBoundValidation.m -- Maind demo file to verify the validity, and tightness, of the bound predicted theoretically versus the actual average and maximum subspace errors obtained.
+2. DemoBoundValidation.m -- Main demo file to verify the validity, and tightness, of the bound predicted theoretically versus the actual average and maximum subspace errors obtained.
 
 3. SimpleEVD.m -- main function to perform the SVD algorithm 
 4. Calc_SubspaceError -- function to calculate the subspace errors between two subspaces
